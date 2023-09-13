@@ -111,6 +111,12 @@ If your bam files are in multiple folders, manually create a file `02_info/bam.f
 ./01_scripts/02_list_bamfiles_multifolder.sh
 ```
 
+At this point, you might already want to check for outlier samples to exclude from your analyses. 
+
+```
+sbatch 01_scripts/utility_scripts/03_saf_maf_gl_all.sh
+```
+
 ## 03_RUN_INITIAL_ANALYSIS_ON_WHOLE_DATASET
 this script will work on all bamfiles and calculate saf, maf & genotype likelihood on the whole dataset. It will output in 
 02_info folder the list of SNP which passed the MIN_MAF and PERCENT_IND filters & their Major-minor alleles (sites_*)
