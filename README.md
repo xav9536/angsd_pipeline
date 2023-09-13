@@ -45,7 +45,7 @@ copy the path into 01_config.sh NGSPARALOG_PATH=~/Softwares/ngsparalog
 
 install mosdepth
 https://github.com/brentp/mosdepth
-copy the path into 01_config.sh NGSPARALOG_PATH=~/Softwares/mosdepth
+copy the path into 01_config.sh MOSDEPTH_PATH=~/Softwares/mosdepth
 
 for all script file, you may edit the header to put your email adress and adjust cpu/memory/time/allocation and slurm partition 
 
@@ -103,6 +103,8 @@ edit script if you want to add another way of grouping (group.txt)
 ./01_scripts/02_list_bamfiles.sh
 ```
 WARNING: if you re-run this script after editing your bam.filelist (e.g. to remove duplicates or outliers), it will replace it...
+
+
 
 ## 03_RUN_INITIAL_ANALYSIS_ON_WHOLE_DATASET
 this script will work on all bamfiles and calculate saf, maf & genotype likelihood on the whole dataset. It will output in 
