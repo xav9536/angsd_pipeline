@@ -56,7 +56,7 @@ input:
 They must be aligned to the reference, indexed and sorted, named like "id_sex_pop_group_blablabla.sorted.bam.
 They can  be kept in original folder, just know the path to their location from the angsd_pipeline folder
 
-insert this path in BAM_PATH= in the 01_config.sh
+If all your bam files are in a single folder, insert the path in BAM_PATH= in the 01_config.sh
 
 Useful for most analysis:
 
@@ -94,17 +94,22 @@ MAX_DEPTH should be set at about 3-4 times the expected coverage if you want to 
 For later steps, choose WINDOW and WINDOW_STEP for sliding-windows analyses, and K_MIN, K_MAX for admixture analysis
 
 ## 02_LIST_BAMFILES_AND_LIST_BY_POP
-this script will make a list of all bamfiles and several list by population, based on information in bamfile names and pop.txt
+This script will make a list of all bamfiles and several list by population, based on information in bamfile names and pop.txt
 WARNING: you may have blanks or duplicates -> if you want to check them you can keep them but for all regular analysis it will be important to remove them from the bamlist.
 Blanks will be useless as there are nothing and have almost no reads. Duplicates will messed up with the PCA as they will have a very high covariance.
 
 edit script if you want to add another way of grouping (group.txt)
+
+If all your bam files are in a single folder, run:
 ```
-./01_scripts/02_list_bamfiles.sh
+./01_scripts/02_list_bamfiles_singlefolder.sh
 ```
 WARNING: if you re-run this script after editing your bam.filelist (e.g. to remove duplicates or outliers), it will replace it...
 
-
+If your bam files are in multiple folders, manually create a file `02_info/bam.filelist` containing the list of wanted bam files, then run:
+```
+./01_scripts/02_list_bamfiles_multifolder.sh
+```
 
 ## 03_RUN_INITIAL_ANALYSIS_ON_WHOLE_DATASET
 this script will work on all bamfiles and calculate saf, maf & genotype likelihood on the whole dataset. It will output in 
