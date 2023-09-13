@@ -6,13 +6,15 @@ It has been used for the analyses in the paper reference below, and it is flexib
 Claire Mérot, Emma Berdan, Hugo Cayuela, Haig Djambazian, Anne-Laure Ferchaud, Martin Laporte, Eric Normandeau, Jiannis Ragoussis, Maren Wellenreuther, Louis Bernatchez, Locally adaptive inversions modulate genetic variation at different geographic scales in a seaweed fly, Molecular Biology and Evolution, 2021;, msab143
 https://doi.org/10.1093/molbev/msab143
 
-This version of the pipeline had been modified by Xavier Dallaire following exploration around mismapped reads creating SNPs in deviation from expectation of Hardy-Weinberg equilibrium and balanced allelic ratio (see preprint below).
+This version of the pipeline has been modified by Xavier Dallaire following exploration around mismapped reads creating SNPs in deviation from expectation of Hardy-Weinberg equilibrium and balanced allelic ratio (see preprint below).
 
 Xavier Dallaire, Raphael Bouchard, Philippe Hénault, Gabriela Ulmo Diaz, Eric Normandeau, Claire Mérot, Louis Bernatchez, J.-S. Moore. (2023).  Widespread deviant patterns of heterozygosity due to autopolyploidization, repeated elements and duplication in whole-genome sequencing of salmonids. Preprint: [https://www.biorxiv.org/content/10.1101/2023.07.27.550877v1](https://doi.org/10.1101/2023.07.27.550877)
 
+Here is a summary of the additions to the original pipeline:
 
-
-
+- Implementation of ngsparalog (https://github.com/tplinderoth/ngsParalog) to identify and filter paralog and other duplicated SNPs (hereafter called deviant SNPs, as opposed to canonical SNPs)
+- Diminution of runtime by parallelizing and removal of non-essential computation (e.g. SAF in analyses not related to site frequency spectrums)
+- Various quality control assessment (coverage by sample, missingness)
 
 IMPORTANT: run all commands from the angsd_pipeline folder
 
@@ -37,6 +39,14 @@ install pcangsd (maybe in the misc folder) & check if you have python2
 http://www.popgen.dk/software/index.php/PCAngsd
 copy the path into 01_config.sh PCA_ANGSD_PATH=~/Softwares/pcangsd
 
+install ngsparalog
+https://github.com/tplinderoth/ngsParalog
+copy the path into 01_config.sh NGSPARALOG_PATH=~/Softwares/ngsparalog
+
+install mosdepth
+https://github.com/brentp/mosdepth
+copy the path into 01_config.sh NGSPARALOG_PATH=~/Softwares/mosdepth
+
 for all script file, you may edit the header to put your email adress and adjust cpu/memory/time/allocation and slurm partition 
 
 ## 01_PREPARE_DATA
@@ -50,7 +60,7 @@ insert this path in BAM_PATH= in the 01_config.sh
 
 Useful for most analysis:
 
-- info.txt in 02_info folder: a file listing the bamfile names ordered  with a column for any relevant information on the individuals
+- info.txt in 02_info folder: a file listing the bamfile names ordered with a column for any relevant information on the individuals
 for follow-up analyses with R ideally: col1=bam_filename, col2=id, col3=sex, col4=pop, col5=group, col6=group ...
 - pop.txt in 02_info folder : a file listing population names with one item by line (there can be several files if we aimed at analysing different grouping, pop1.txt, pop_geo.txt, etc)
 
