@@ -1,10 +1,16 @@
 # angsd_pipeline for population genomics with low-coverage whole-genome sequencing
 
-This pipeline was built by Claire Mérot with help and scripts from Eric Normandeau and many inputs from Anne-Laure Ferchaud and Amanda Xuereb.
+This pipeline was originally built by Claire Mérot with help and scripts from Eric Normandeau and many inputs from Anne-Laure Ferchaud and Amanda Xuereb.
 It has been used for the analyses in the paper reference below, and it is flexible to be used for similar kind of analysis on different datasets.
 
 Claire Mérot, Emma Berdan, Hugo Cayuela, Haig Djambazian, Anne-Laure Ferchaud, Martin Laporte, Eric Normandeau, Jiannis Ragoussis, Maren Wellenreuther, Louis Bernatchez, Locally adaptive inversions modulate genetic variation at different geographic scales in a seaweed fly, Molecular Biology and Evolution, 2021;, msab143
 https://doi.org/10.1093/molbev/msab143
+
+This version of the pipeline had been modified by Xavier Dallaire following exploration around mismapped reads creating SNPs in deviation from expectation of Hardy-Weinberg equilibrium and balanced allelic ratio (see preprint below).
+
+Xavier Dallaire, Raphael Bouchard, Philippe Hénault, Gabriela Ulmo Diaz, Eric Normandeau, Claire Mérot, Louis Bernatchez, J.-S. Moore. (2023).  Widespread deviant patterns of heterozygosity due to autopolyploidization, repeated elements and duplication in whole-genome sequencing of salmonids. Preprint: [https://www.biorxiv.org/content/10.1101/2023.07.27.550877v1](https://doi.org/10.1101/2023.07.27.550877)
+
+
 
 
 
