@@ -38,7 +38,8 @@ echo "filter on allele frequency = $MIN_MAF"
 ####Calculate the MAF and HWE
 angsd -P $NB_CPU -nQueueSize 50 \
 -doMaf 1 -doHWE 1 -GL 2 -doMajorMinor 1 -doCounts 1 \
--remove_bads 1 -minMapQ 30 -minQ 20 -skipTriallelic 1 -uniqueOnly 1\
+-remove_bads 1 -minMapQ 30 -minQ 20 -skipTriallelic 1 \
+-uniqueOnly 1 -only_proper_pairs 1 \
 -minInd $MIN_IND -minMaf $MIN_MAF -setMaxDepth $MAX_DEPTH -setMinDepthInd $MIN_DEPTH \
 -b 02_info/bam.filelist \
 $REGIONS -out 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
@@ -56,15 +57,21 @@ $REGIONS -out 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MA
 #filter on bam files -remove_bads (remove files with flag above 255) -minMapQ minimum mapquality -minQ (minimum quality of reads?)
 #filter on frequency -minInd (minimum number of individuals with at least one read at this locus) we set it to 50%
 #filter on allele frequency -minMaf, set to 0.05 
+#filter on reads with several hits -uniqueOnly
+#filter on pairs of reads not properly mapped -only_proper_pairs 1 (by default in ANGSD)
+
+
 
 #extract SNP which passed the MIN_MAF and PERCENT_IND filters & their Major-minor alleles
-#order the sites file by chromosome names 
-#makes a region file matching the sites files and with same order
+#output
 #index sites file
 echo "from the maf file, extract a list of SNP chr, positoin, major all, minor all"
-zcat 03_saf_maf_gl_all/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR".mafs.gz | cut -f1-4 | tail -n+2 | tee > 02_info/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND" 02_info/regions_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
+mkdir 02_info/sites_all_by_chr/
+gunzip 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR".mafs.gz 
 
-OUTFILE_sites=02_info/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
-OUTFILE_regions=02_info/regions_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
+INFILE=03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR".mafs
+OUTFILE_sites=02_info/sites_all_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
+
+Rscript 01_scripts/Rscripts/make_sites_list_maxdepth_simple.R "$INFILE" "$OUTFILE_sites"
 
 angsd sites index $OUTFILE_sites
