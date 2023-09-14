@@ -1,17 +1,21 @@
 #!/bin/bash
-#SBATCH -J "03_saf_maf_gl_all_maxdepth"
+#SBATCH -J "03A_ngsparalog"
 #SBATCH -o log_%j
 #SBATCH -c 4 
 #SBATCH -p medium
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=YOURMAIL
 #SBATCH --time=7-00:00
-#SBATCH --mem=100G
+#SBATCH --mem=20G
 
-###this script will work on all bamfiles and calculate saf, maf & genotype likelihood
+### This script will work on all bamfiles and use ANGSD to call SNPs that pass coverage and MAF filters,
+### then calculate the likelihoods that reads wer mismapped at the position of snps using ngsparalog
+### to produce list of canonical and deviant SNPs
+### This process was parallelized by chromosomes for considerable gains in efficiency
+
 #maybe edit
-NB_CPU=4 #change accordingly in SLURM header
-#REGIONS="-rf 02_info/regions_25kb_100snp.txt" #optional edit with your region selected file
+NB_CPU=4 #change accordingly in SLURM header, 
+REGIONS="-rf 02_info/regions_25kb_100snp.txt" #optional edit with your region selected file
 REGIONS="" # to remove the options to focus on a limited number of regions
 
 # Important: Move to directory where job was submitted
@@ -28,22 +32,22 @@ MIN_IND=${MIN_IND_FLOAT%.*}
 MAX_DEPTH=$(echo "($N_IND * $MAX_DEPTH_FACTOR)" |bc -l)
 
 echo " Calculate the SAF, MAF and GL for all individuals listed in 02_info/bam.filelist"
-echo "keep loci with at leat one read for n individuals = $MIN_IND, which is $PERCENT_IND % of total $N_IND individuals"
+echo "keep loci with at least $MIN_DEPTH read for n individuals = $MIN_IND, which is $PERCENT_IND % of total $N_IND individuals"
 echo "filter on allele frequency = $MIN_MAF"
 
-####Calculate the SAF, MAF and GL
+####Calculate the MAF and HWE
 angsd -P $NB_CPU -nQueueSize 50 \
--doMaf 1 -dosaf 1 -GL 2 -doGlf 2 -doMajorMinor 1 -doCounts 1 \
--anc 02_info/genome.fasta -remove_bads 1 -minMapQ 30 -minQ 20 -skipTriallelic 1 \
+-doMaf 1 -doHWE 1 -GL 2 -doMajorMinor 1 -doCounts 1 \
+-remove_bads 1 -minMapQ 30 -minQ 20 -skipTriallelic 1 -uniqueOnly 1\
 -minInd $MIN_IND -minMaf $MIN_MAF -setMaxDepth $MAX_DEPTH -setMinDepthInd $MIN_DEPTH \
 -b 02_info/bam.filelist \
-$REGIONS -out 03_saf_maf_gl_all/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
+$REGIONS -out 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
 
 #main features
 #-P nb of threads -nQueueSize maximum waiting in memory (necesary to optimize CPU usage
-# -doMaf 1 (allele frequencies)  -dosaf (prior for SFS) -GL (Genotype likelihood 2 GATK method - export GL in beagle format  -doGLF2) 
+# -doMaf 1 (allele frequencies) -GL (Genotype likelihood 2 GATK method)
+# -doHWE 1 (calculate deviation from Hardy-Weinberg Equilibrium)
 # -doMajorMinor 1 use the most frequent allele as major
-# -anc provide a ancestral sequence = reference in our case -fold 1 (car on utilise la ref comme ancestral
 # -rf (file with the region written) work on a defined region : OPTIONAL
 # -b (bamlist) input file
 # -out  output file
