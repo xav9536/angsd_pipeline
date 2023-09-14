@@ -80,7 +80,7 @@ awk '{print $1"\t"$2-1"\t"$2}' $OUTFILE_sites > $BED_FILE
 
 ### mpileup and ngsParalog without intermidate files
 samtools mpileup -b 02_info/bam.filelist -l $BED_FILE -r $REGION -q 0 -Q 0 --ff UNMAP,DUP |
-~/programs/ngsParalog/ngsParalog calcLR \
+"$NGSPARALOG_PATH"/ngsParalog calcLR \
     -infile - \
     -outfile 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".ngsparalog \
     -minQ 20 -minind $MIN_IND -mincov $MIN_DEPTH -allow_overwrite 1
