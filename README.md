@@ -21,7 +21,7 @@ IMPORTANT: run all commands from the angsd_pipeline folder
 # overview of the pipeline 
 ![overview_angsd_pipeline](https://github.com/clairemerot/angsd_pipeline/blob/master/Angsd_possibilities.jpg)
 
-## 00_DEPENDANCIES
+# 00_DEPENDANCIES
 install angsd & associated programs
 http://www.popgen.dk/angsd/index.php/ANGSD
 
@@ -48,7 +48,7 @@ https://github.com/brentp/mosdepth
 
 for all script file, you may edit the header to put your email adress and adjust cpu/memory/time/allocation and slurm partition 
 
-## 01_PREPARE_DATA
+# 01_PREPARE_DATA
 
 input: 
 - bam-files
@@ -82,6 +82,23 @@ You may want to reduce this list to improve computation time and exclude short u
 ```
 grep -e ">" 02_info/genome.fasta | awk 'sub(/^>/, "")' | sort -k1 > 02_info/region.txt
 ```
+
+- region_num.txt: a list of two-digits numbers for ease of naming output files while parallelizing.
+Example for a genome with 11 chromosome
+```
+01
+02
+03
+04
+05
+06
+07
+08
+09
+10
+11
+```
+
 - edit the 01_config.sh file
 
 choose MIN_MAF, PERCENT_IND, MIN_DEPTH, MAX_DEPTH filter for intials steps
@@ -92,7 +109,7 @@ MAX_DEPTH should be set at about 3-4 times the expected coverage if you want to 
 
 For later steps, choose WINDOW and WINDOW_STEP for sliding-windows analyses, and K_MIN, K_MAX for admixture analysis
 
-## 02_LIST_BAMFILES_AND_LIST_BY_POP
+# 02_LIST_BAMFILES_AND_LIST_BY_POP
 This script will make a list of all bamfiles and several list by population, based on information in bamfile names and pop.txt
 WARNING: you may have blanks or duplicates -> if you want to check them you can keep them but for all regular analysis it will be important to remove them from the bamlist.
 Blanks will be useless as there are nothing and have almost no reads. Duplicates will messed up with the PCA as they will have a very high covariance.
@@ -110,14 +127,14 @@ If your bam files are in multiple folders, manually create a file `02_info/bam.f
 ./01_scripts/02_list_bamfiles_multifolder.sh
 ```
 
-At this point, you might already want to check for outlier samples to exclude from your analyses. 
-
+At this point, you might already want to check for outlier samples to exclude from your analyses. Mosdepth can be used to quickly estimate the average coverage on the first chromosome of each bamfile. Samples with too low coverage could be removed, and samples with too high coverage could be subsampled (for example with `samtools view -s`)
 ```
-sbatch 01_scripts/utility_scripts/03_saf_maf_gl_all.sh
+sbatch 01_scripts/utility_scripts/mosdepth_by_bam.sh
 ```
+NB: This script uses grep to recognize patterns corresponding to your samples ID in the bam file names (e.g. `[A-Z][A-Z][A-Z]s_[0-9][0-9][0-9]-[0-9][0-9]`). Edit it to fit your data.
 
-## 03_RUN_INITIAL_ANALYSIS_ON_WHOLE_DATASET
-# A) Call SNP and run ngsparalog to filter deviant SNPs
+# 03_RUN_INITIAL_ANALYSIS_ON_WHOLE_DATASET
+## A) Call SNP and run ngsparalog to filter deviant SNPs
 
 This script will work on all bamfiles and use ANGSD to call SNPs that pass coverage and MAF filters, then calculate the likelihoods that reads wer mismapped at the position of snps using ngsparalog to produce list of canonical and deviant SNPs. At this step, it is not necessary to output genotype likelihoods in a beagle file.
 
@@ -128,7 +145,7 @@ cat 02_info/regions_number.txt | parallel -j10 srun -c 4 --mem 20G -p ibis_small
 ```
 Adjust -j and -c to fit your available ressources, and -p to your partition name.
 
-# B) Run ANGSD on the retained SNPs
+## B) Run ANGSD on the retained SNPs
 
 Now that we have lists of canonical SNPs for each chromosome, we can run ANGSD again to calculate genotype likelihoods at those positions.
 
@@ -136,11 +153,11 @@ Now that we have lists of canonical SNPs for each chromosome, we can run ANGSD a
 cat 02_info/regions_number.txt | parallel -j10 srun -c 4 --mem 20G -p ibis_small -o log_%j --time 1-00:00 ./01_scripts/03B_gl_maf_canonical.sh {}
 ```
 
-# C) Prune dataset for linkage desiquilibrium (optional)
+## C) Prune dataset for linkage desiquilibrium (optional)
 
 
 
-## 04_PCA_VISUALISE_CHECK_WHETHER_YOU_WANT_TO_EXCLUDE_OUTLIERS
+# 04_PCA_VISUALISE_CHECK_WHETHER_YOU_WANT_TO_EXCLUDE_OUTLIERS
 this script will work on all individuals using the beagle genotype likelihood and calculate a covariance matrix with angsd.
 it also output the pca with R, and visualisation in pdf
 
@@ -156,7 +173,7 @@ for further visualisation using information from info.txt, the script 01_scripts
 The current visualisation is very basic and was tuned for my 3-groups inversion so it uses Kernel statistics to colour into three groups. Don't bother too much about it, just look at the general repartition of points and export the .pca file to your computer to tune the colours to your own needs (population, sex, etc)
 
 
-## 05_ADMIXTURE_ANALYSIS
+# 05_ADMIXTURE_ANALYSIS
 this script will work on all individuals using the beagle genotype likelihood and perform an admixture analysis. 
 this requires NGSadmix to be installed and its path export in the bashrc. 
 NGS admiw will explore all number of population between K_MIN and K_MAX as provided in the 01_config.sh.
@@ -167,7 +184,7 @@ sbatch 01_scripts/05_ngs_admix.sh
 
 for further visualisation using information from info.txt, the script 01_scripts/Rscripts/visualise_admix.r can be useful
 
-## 06_CALCULATE_ALLELES_FREQUENCIES_BY_POP
+# 06_CALCULATE_ALLELES_FREQUENCIES_BY_POP
 this script will work on bamfiles by population and calculate saf  & maf. 
 It will run on the list of sites determined at step 3 (filter on global population). Major and minor alleles are polarized by the list of SNPs from step 3 which means 
 that an allele can be minor at the scale of all populations but at frequency >50% in a given population. Keeping this polarisation is important because we want to have the frequency of the same allele accross popualtions.
@@ -180,7 +197,7 @@ sbatch 01_scripts/06_saf_maf_by_pop.sh
 ```
 The resulting MAF by population are the data used by the selection_analysis pipeline which does environmental associations.
 
-## 07_CALCULATE_PAIRWISE_FST
+# 07_CALCULATE_PAIRWISE_FST
 This script will calculate the unfold saf by population; then the 2dSFS and FST for each pair of populations
 It starts with a R script that subset the population bamlist ot have the same number of individuals as this factor can strongly influence Fst values.
 
@@ -194,14 +211,14 @@ sbatch 01_scripts/07_fst_by_group.sh
 ```
 for further visualisation (requires the corrplot package), you may use 01_scripts/Rscripts/visualise_fst.r 
 
-## 08_CALCULATE_THETAS
+# 08_CALCULATE_THETAS
 this script will NOT filter on Maf as we want to keep all positions to calculate thetas statistics. It will simply filter on coverage with the same parameters fixed in 01_config.sh. It calculates the saf, 1DSFS and thetas statistics by population. I have tried on all populations together but it does not really make sense and it is impossible to run on thousands of individuals.
 
 Beware if ancestral sequenc is the reference (folded spectrum), not all stats are meaningful.
 ```
 sbatch 01_scripts/08_thetas_by_pop.sh
 ```
-## 09_MAKE_GWAS
+# 09_MAKE_GWAS
 those two scripts can do a gwas either with binary phenoty "_bin" or quantitative phenotype "_quant".
 
 phenotype files should be put in 02_info (see some examples herein)
@@ -216,7 +233,7 @@ sbatch 01_scripts/09_gwas_bin.sh
 
 sbatch 01_scripts/09_gwas_quant.sh
 ```
-## 10 MAKING PCA BY WINDOW ALONG GENOME
+# 10 MAKING PCA BY WINDOW ALONG GENOME
 This step include several modules that should be run successively
 important: edit window size - this is a number of SNPs
 windows od 100 to 10 000 SNPs allows analysis along the genome, while a large window can be chosen if one wants to make a pca by chromosome (see also 10C to directly do a local PCA on a given window)
@@ -270,7 +287,7 @@ LG1_125 LG1_456
 It will output pca, eigen-values and images.
 
 
-## 11 LD pruning with PLINK
+# 11 LD pruning with PLINK
 This step allow outputing genotype likelihoods in plink format and run plink to extract a list of LD-pruned SNPs.
 
 by default values for Plink pruning are as follow and can be adjusted directly in the script 
@@ -281,7 +298,7 @@ VIF=2
 
 sbatch 01_scripts/11_plink_pruning.sh
 ```
-## 12 LD calculation by NGSLD
+# 12 LD calculation by NGSLD
 There are two sets of scripts: the ones "byLG" which will loop on chromosomes to do them separately, and the ones "fusion" that will do two chromosomes, including LD within adn between chromosomes.
 
 Step A is making a begale file with more stringent filtering
@@ -351,7 +368,7 @@ MAX_DEPTH_FACTOR=3 #filter : will keep SNP with less than X time the nb of indiv
 ```
 
 
-## 13 Hardy-Weinberg statistics and Hobs
+# 13 Hardy-Weinberg statistics and Hobs
 This step use the -hwe module of angsd to output HW statistics per population/group.
 
 I have add a Rscript it to extract the number of heterozygotes observed at each SNP.
@@ -362,6 +379,6 @@ https://github.com/tavareshugo/WindowScanR
 ```
 sbatch 01_scripts/13_hwe.sh
 ```
-## ANALYSING_MAF_SELECTION_TESTS_ETC
+# ANALYSING_MAF_SELECTION_TESTS_ETC
 See selection_pipeline
 

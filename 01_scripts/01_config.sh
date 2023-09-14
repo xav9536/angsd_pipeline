@@ -5,8 +5,7 @@ BAM_PATH=../wgs_sample_preparation/09_no_overlap
 #this is the former version of ANGSD - it uses python2 and may require some libraries.
 PCA_ANGSD_PATH=/mnt/ibis/lbernatchez/programs/pcangsd 
 
-#path to pcaangsd
-#this is the former version of ANGSD - it uses python2 and may require some libraries.
+#path to ngsparalog
 NGSPARALOG_PATH=~/program_valeria/ngsParalog
 
 #filter : will keep SNP above this allele frequency (over all individuals)

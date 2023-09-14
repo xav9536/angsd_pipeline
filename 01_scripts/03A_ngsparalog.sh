@@ -64,7 +64,7 @@ echo "from the maf file, extract a list of SNP chr, positoin, major all, minor a
 mkdir 02_info/sites_by_chr/
 gunzip 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".mafs.gz 
 
-INFILE=03A_ngsparalog/sites_by_chr/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".mafs
+INFILE=03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".mafs
 OUTFILE_sites=02_info/sites_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM"
 BED_FILE=02_info/sites_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".bed
 
@@ -76,7 +76,7 @@ angsd sites index $OUTFILE_sites
 awk '{print $1"\t"$2-1"\t"$2}' $OUTFILE_sites > $BED_FILE
 
 ### Run mpileup and ngsParalog without intermidate files
-samtools mpileup -b 02_info/bam.filelist -l $BED_FILE -r $REGION -q 0 -Q 0 --ff UNMAP,DUP |
+samtools mpileup -b $BAMLIST -l $BED_FILE -r $REGION -q 0 -Q 0 --ff UNMAP,DUP |
 "$NGSPARALOG_PATH"/ngsParalog calcLR \
     -infile - \
     -outfile 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".ngsparalog \
@@ -87,3 +87,5 @@ Rscript 01_scripts/Rscripts/convert_ngsparalog_to_sitelist.R \
     03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".ngsparalog \
     $OUTFILE_sites $PVAL_THRESHOLD
 
+angsd sites index "$OUTFILE_sites"_deviant
+angsd sites index "$OUTFILE_sites"_canonical

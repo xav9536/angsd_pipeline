@@ -14,7 +14,7 @@ ngsP_paralog = ngsP[ngsP$pval.adj <= threshold,]
 
 write.table(ngsP_nonparalog[,1:2],
               paste0(OUTFILE_sites, "_canonical"),
-              quote = T, row.names = F, col.names = F)
-  write.table(ngsP_paralog[,1:2],
+              quote = F, row.names = F, col.names = F)
+write.table(ngsP_paralog[,1:2],
               paste0(OUTFILE_sites, "_deviant"),
-              quote = T, row.names = F, col.names = F)
+              quote = F, row.names = F, col.names = F)
