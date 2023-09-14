@@ -5,8 +5,8 @@
 ### to produce list of canonical and deviant SNPs
 
 ### This process was parallelized by chromosomes for considerable gains in efficiency
-### To run 10 chromosomes at the same time, use:
-### cat 02_info/regions_number.txt | parallel -j10 srun -c 4 --mem 100G -p medium -o log_%j --time 7-00:00 ./01_scripts/03A_ngsparalog.sh {}
+### For example, to run 10 chromosomes at the same time, use:
+### cat 02_info/regions_number.txt | parallel -j10 srun -c 4 --mem 20G -p ibis_small -o log_%j --time 1-00:00 ./01_scripts/03A_ngsparalog.sh {}
 ### Adjust -j and -c to fit your available ressources
 
 NB_CPU=4 #change accordingly to the -c argument in srun, 
@@ -75,7 +75,7 @@ angsd sites index $OUTFILE_sites
 # convert site file to bed for ngsparalog
 awk '{print $1"\t"$2-1"\t"$2}' $OUTFILE_sites > $BED_FILE
 
-### mpileup and ngsParalog without intermidate files
+### Run mpileup and ngsParalog without intermidate files
 samtools mpileup -b 02_info/bam.filelist -l $BED_FILE -r $REGION -q 0 -Q 0 --ff UNMAP,DUP |
 "$NGSPARALOG_PATH"/ngsParalog calcLR \
     -infile - \
