@@ -16,6 +16,7 @@
 #maybe edit
 NB_CPU=4 #change accordingly in SLURM header, 
 
+PVAL_THRESHOLD=0.001
 REGION_NUM="$1" 
 REGION=$(head -n $REGION_NUM 02_info/regions.txt | tail -n 1)
 
@@ -90,5 +91,7 @@ samtools mpileup -b 02_info/bam.filelist -l $BED_FILE -r $REGION -q 0 -Q 0 --ff 
     -minQ 20 -minind $MIN_IND -mincov $MIN_DEPTH -allow_overwrite 1
 
 ### Convert ngsparalog output in list of canonical and deviant SNPs based on p-value threshold
-
+Rscript 01_scripts/Rscripts/convert_ngsparalog_to_sitelist.R \
+    03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".ngsparalog \
+    $OUTFILE_sites $PVAL_THRESHOLD
 
