@@ -117,14 +117,28 @@ sbatch 01_scripts/utility_scripts/03_saf_maf_gl_all.sh
 ```
 
 ## 03_RUN_INITIAL_ANALYSIS_ON_WHOLE_DATASET
-this script will work on all bamfiles and calculate saf, maf & genotype likelihood on the whole dataset. It will output in 
-02_info folder the list of SNP which passed the MIN_MAF and PERCENT_IND filters & their Major-minor alleles (sites_*)
+# A) Call SNP and run ngsparalog to filter deviant SNPs
 
-maybe edit the number of cpu NB_CPU and allocated memory/time
+This script will work on all bamfiles and use ANGSD to call SNPs that pass coverage and MAF filters, then calculate the likelihoods that reads wer mismapped at the position of snps using ngsparalog to produce list of canonical and deviant SNPs. At this step, it is not necessary to output genotype likelihoods in a beagle file.
+
+This process was parallelized by chromosomes for considerable gains in efficiency.
+For example, to run all your chromosomes in SLURM (10 chromosomes at a time), use:
+```
+cat 02_info/regions_number.txt | parallel -j10 srun -c 4 --mem 20G -p ibis_small -o log_%j --time 1-00:00 ./01_scripts/03A_ngsparalog.sh {}
+```
+Adjust -j and -c to fit your available ressources, and -p to your partition name.
+
+# B) Run ANGSD on the retained SNPs
+
+Now that we have lists of canonical SNPs for each chromosome, we can run ANGSD again to calculate genotype likelihoods at those positions.
 
 ```
-sbatch 01_scripts/03_saf_maf_gl_all.sh
+cat 02_info/regions_number.txt | parallel -j10 srun -c 4 --mem 20G -p ibis_small -o log_%j --time 1-00:00 ./01_scripts/03B_gl_maf_canonical.sh {}
 ```
+
+# C) Prune dataset for linkage desiquilibrium (optional)
+
+
 
 ## 04_PCA_VISUALISE_CHECK_WHETHER_YOU_WANT_TO_EXCLUDE_OUTLIERS
 this script will work on all individuals using the beagle genotype likelihood and calculate a covariance matrix with angsd.
