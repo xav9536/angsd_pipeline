@@ -45,7 +45,6 @@ copy the path into 01_config.sh NGSPARALOG_PATH=~/Softwares/ngsparalog
 
 install mosdepth
 https://github.com/brentp/mosdepth
-copy the path into 01_config.sh MOSDEPTH_PATH=~/Softwares/mosdepth
 
 for all script file, you may edit the header to put your email adress and adjust cpu/memory/time/allocation and slurm partition 
 
