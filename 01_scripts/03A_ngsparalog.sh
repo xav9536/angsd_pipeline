@@ -16,10 +16,7 @@ REGION_NUM="$1"
 REGION=$(head -n $REGION_NUM 02_info/regions.txt | tail -n 1)
 BAMLIST="02_info/bam.filelist"
 
-# Important: Move to directory where job was submitted
-cd $SLURM_SUBMIT_DIR
-
-module load angsd/0.931
+module load angsd
 module load samtools
 module load r
 ulimit -S -n 2048
@@ -69,7 +66,7 @@ gunzip 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH
 
 INFILE=03A_ngsparalog/sites_by_chr/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".mafs
 OUTFILE_sites=02_info/sites_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM"
-BEDFILE=02_info/sites_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".bed
+BED_FILE=02_info/sites_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".bed
 
 Rscript 01_scripts/Rscripts/make_sites_list_maxdepth_simple.R "$INFILE" "$OUTFILE_sites"
 
