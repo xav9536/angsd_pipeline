@@ -1,24 +1,20 @@
 #!/bin/bash
-#SBATCH -J "03A_ngsparalog"
-#SBATCH -o log_%j
-#SBATCH -c 4 
-#SBATCH -p medium
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=YOURMAIL
-#SBATCH --time=7-00:00
-#SBATCH --mem=20G
 
 ### This script will work on all bamfiles and use ANGSD to call SNPs that pass coverage and MAF filters,
 ### then calculate the likelihoods that reads wer mismapped at the position of snps using ngsparalog
 ### to produce list of canonical and deviant SNPs
-### This process was parallelized by chromosomes for considerable gains in efficiency
 
-#maybe edit
-NB_CPU=4 #change accordingly in SLURM header, 
+### This process was parallelized by chromosomes for considerable gains in efficiency
+### To run 10 chromosomes at the same time, use:
+### cat 02_info/regions_number.txt | parallel -j10 srun -c 4 --mem 100G -p medium -o log_%j --time 7-00:00 ./01_scripts/03A_ngsparalog.sh {}
+### Adjust -j and -c to fit your available ressources
+
+NB_CPU=4 #change accordingly to the -c argument in srun, 
 
 PVAL_THRESHOLD=0.001
 REGION_NUM="$1" 
 REGION=$(head -n $REGION_NUM 02_info/regions.txt | tail -n 1)
+BAMLIST="02_info/bam.filelist"
 
 # Important: Move to directory where job was submitted
 cd $SLURM_SUBMIT_DIR
@@ -30,12 +26,12 @@ ulimit -S -n 2048
 
 #prepare variables - avoid to modify
 source 01_scripts/01_config.sh
-N_IND=$(wc -l 02_info/bam.filelist | cut -d " " -f 1)
+N_IND=$(wc -l $BAMLIST | cut -d " " -f 1)
 MIN_IND_FLOAT=$(echo "($N_IND * $PERCENT_IND)"| bc -l)
 MIN_IND=${MIN_IND_FLOAT%.*} 
 MAX_DEPTH=$(echo "($N_IND * $MAX_DEPTH_FACTOR)" |bc -l)
 
-echo " Calculate the SAF, MAF and GL for all individuals listed in 02_info/bam.filelist"
+echo "Calculate the SAF, MAF and GL for all individuals listed in 02_info/bam.filelist"
 echo "keep loci with at least $MIN_DEPTH read for n individuals = $MIN_IND, which is $PERCENT_IND % of total $N_IND individuals"
 echo "filter on allele frequency = $MIN_MAF"
 
@@ -45,7 +41,7 @@ angsd -P $NB_CPU -nQueueSize 50 \
 -remove_bads 1 -minMapQ 30 -minQ 20 -skipTriallelic 1 \
 -uniqueOnly 1 -only_proper_pairs 1 \
 -minInd $MIN_IND -minMaf $MIN_MAF -setMaxDepth $MAX_DEPTH -setMinDepthInd $MIN_DEPTH \
--b 02_info/bam.filelist \
+-b $BAMLIST \
 -r $REGION -out 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM"
 
 #main features
@@ -64,18 +60,16 @@ angsd -P $NB_CPU -nQueueSize 50 \
 #filter on reads with several hits -uniqueOnly
 #filter on pairs of reads not properly mapped -only_proper_pairs 1 (by default in ANGSD)
 
-
-
 #extract SNP which passed the MIN_MAF and PERCENT_IND filters & their Major-minor alleles
 #output
 #index sites file
 echo "from the maf file, extract a list of SNP chr, positoin, major all, minor all"
-mkdir 02_info/sites_all_by_chr/
+mkdir 02_info/sites_by_chr/
 gunzip 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".mafs.gz 
 
-INFILE=03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".mafs
-OUTFILE_sites=02_info/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM"
-BEDFILE=02_info/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".bed
+INFILE=03A_ngsparalog/sites_by_chr/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".mafs
+OUTFILE_sites=02_info/sites_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM"
+BEDFILE=02_info/sites_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".bed
 
 Rscript 01_scripts/Rscripts/make_sites_list_maxdepth_simple.R "$INFILE" "$OUTFILE_sites"
 
