@@ -25,6 +25,7 @@ cd $SLURM_SUBMIT_DIR
 
 module load angsd/0.931
 module load samtools
+module load r
 ulimit -S -n 2048
 
 #prepare variables - avoid to modify
