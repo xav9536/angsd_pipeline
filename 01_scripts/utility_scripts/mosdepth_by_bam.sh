@@ -15,7 +15,7 @@ mkdir 02_info/depth_chr01
 ## Run mosdepth in fast mode on the first chromosome for each bam, while counting only reads in proper pairs
 for i in $(seq $(wc -l 02_info/bam.filelist | cut -d' ' -f1))
 do
-ID=$(grep -o [A-Z][A-Z][A-Z]s_[0-9][0-9][0-9]-[0-9][0-9] ../02_info/bam.filelist | head -n $i | tail -n 1) ## Edit the pattern to fit your sample ID
+ID=$(grep -o [A-Z][A-Z][A-Z]s_[0-9][0-9][0-9]-[0-9][0-9] 02_info/bam.filelist | head -n $i | tail -n 1) ## Edit the pattern to fit your sample ID
 FILE=$(head -n $i 02_info/bam.filelist | tail -n 1)
 mosdepth -t 4 -n -x -c $FIRST_CHR -i 2 \
          02_info/depth_chr01/$ID $FILE
