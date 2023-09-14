@@ -19,7 +19,7 @@ ID=$(grep -o [A-Z][A-Z][A-Z]s_[0-9][0-9][0-9]-[0-9][0-9] ../02_info/bam.filelist
 FILE=$(head -n $i 02_info/bam.filelist | tail -n 1)
 mosdepth -t 4 -n -x \
          -c $FIRST_CHR \ #only on first chromosome
-         -i 2 \ #include only reads in proper pairs (by default in ANGSD)
+         -i 2 \ #include only reads in proper pairs
          02_info/depth_chr01/$ID $FILE
 done
 
