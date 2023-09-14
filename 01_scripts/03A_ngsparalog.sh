@@ -15,13 +15,15 @@
 
 #maybe edit
 NB_CPU=4 #change accordingly in SLURM header, 
-REGIONS="-rf 02_info/regions_25kb_100snp.txt" #optional edit with your region selected file
-REGIONS="" # to remove the options to focus on a limited number of regions
+
+REGION_NUM="$1" 
+REGION=$(head -n $REGION_NUM 02_info/regions.txt | tail -n 1)
 
 # Important: Move to directory where job was submitted
 cd $SLURM_SUBMIT_DIR
 
 module load angsd/0.931
+module load samtools
 ulimit -S -n 2048
 
 #prepare variables - avoid to modify
@@ -42,7 +44,7 @@ angsd -P $NB_CPU -nQueueSize 50 \
 -uniqueOnly 1 -only_proper_pairs 1 \
 -minInd $MIN_IND -minMaf $MIN_MAF -setMaxDepth $MAX_DEPTH -setMinDepthInd $MIN_DEPTH \
 -b 02_info/bam.filelist \
-$REGIONS -out 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
+-r $REGION -out 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM"
 
 #main features
 #-P nb of threads -nQueueSize maximum waiting in memory (necesary to optimize CPU usage
@@ -67,11 +69,26 @@ $REGIONS -out 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MA
 #index sites file
 echo "from the maf file, extract a list of SNP chr, positoin, major all, minor all"
 mkdir 02_info/sites_all_by_chr/
-gunzip 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR".mafs.gz 
+gunzip 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".mafs.gz 
 
-INFILE=03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR".mafs
-OUTFILE_sites=02_info/sites_all_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
+INFILE=03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".mafs
+OUTFILE_sites=02_info/sites_all_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM"
+BEDFILE=02_info/sites_all_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".bed
 
 Rscript 01_scripts/Rscripts/make_sites_list_maxdepth_simple.R "$INFILE" "$OUTFILE_sites"
 
 angsd sites index $OUTFILE_sites
+
+# convert site file to bed for ngsparalog
+awk '{print $1"\t"$2-1"\t"$2}' $OUTFILE_sites > $BED_FILE
+
+### mpileup and ngsParalog without intermidate files
+samtools mpileup -b 02_info/bam.filelist -l $BED_FILE -r $REGION -q 0 -Q 0 --ff UNMAP,DUP |
+~/programs/ngsParalog/ngsParalog calcLR \
+    -infile - \
+    -outfile 03A_ngsparalog/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM".ngsparalog \
+    -minQ 20 -minind $MIN_IND -mincov $MIN_DEPTH -allow_overwrite 1
+
+### Convert ngsparalog output in list of canonical and deviant SNPs based on p-value threshold
+
+
