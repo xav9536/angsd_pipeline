@@ -28,6 +28,6 @@ source 01_scripts/01_config.sh
 for i in $(seq $K_MIN $K_MAX)
 	do 
 	echo $i
-	NGSadmix -P $NB_CPU -likes 03_saf_maf_gl_all/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR".beagle.gz \
+	NGSadmix -P $NB_CPU -likes 03B_gl_maf_canonical/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR".beagle.gz \
 	-minMaf $MIN_MAF -K $i -o 05_ngs_admix/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_K"$i"
 	done

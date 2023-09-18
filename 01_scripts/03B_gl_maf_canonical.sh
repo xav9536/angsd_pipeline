@@ -38,7 +38,7 @@ angsd -P $NB_CPU -nQueueSize 50 \
 -uniqueOnly 1 -only_proper_pairs 1 \
 -r "$REGION" \
 -b "$BAMLIST" \
--out 03B_gl_maf_canonical/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM"_canonical
+-out 03B_gl_maf_canonical/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr"$REGION_NUM"
 
 #main features
 #-P nb of threads -nQueueSize maximum waiting in memory (necesary to optimize CPU usage

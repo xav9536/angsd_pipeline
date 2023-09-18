@@ -26,6 +26,9 @@ module load angsd/0.931 #only with this version the SFS/FST script runs well (ed
 #make sure you index the sites file with the same version 
 ulimit -S -n 2048
 
+# Before analysis and if not done before : combine per-chromosome canonical SNP lists
+cat 02_info/sites_by_chr/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_chr[0-9][0-9]_canonical) > 02_info/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_canonical
+
 #prepare variables - avoid to modify
 source 01_scripts/01_config.sh
 
@@ -51,8 +54,7 @@ angsd -P $NB_CPU \
 -dosaf 1 -GL 2 -doMajorMinor 3 \
 -anc 02_info/genome.fasta \
 -remove_bads 1 -minMapQ 30 -minQ 20 -minInd $MIN_IND -setMinDepthInd $MIN_DEPTH \
--sites 02_info/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR" \
--rf 02_info/regions_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR" \
+-sites 02_info/sites_all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_canonical \
 -b 07_fst_by_pop_pair/$GROUP/"$i"subsetbam.filelist -out 07_fst_by_pop_pair/$GROUP/"$i"_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
 done
 

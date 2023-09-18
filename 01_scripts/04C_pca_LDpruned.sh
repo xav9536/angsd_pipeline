@@ -24,13 +24,13 @@ source 01_scripts/01_config.sh
 BAM_LIST=02_info/bam.filelist
 
 #this is the input file for the pca
-INPUT=03_saf_maf_gl_all/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_pruned.beagle.gz
+INPUT=03C_gl_maf_canonical_LDpruned/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_LDpruned.beagle.gz
 
 echo "analyse covariance matrix on all individuals"
 python2 $PCA_ANGSD_PATH/pcangsd.py -threads $NB_CPU \
-	-beagle $INPUT -o 04_pca/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_pruned
+	-beagle $INPUT -o 04_pca/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_LDpruned
 
 echo "transform covariance matrix into PCA"
-COV_MAT=04_pca/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_pruned.cov
+COV_MAT=04_pca/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"_LDpruned.cov
 Rscript 01_scripts/Rscripts/make_pca_simple.r "$COV_MAT" "$BAM_LIST"
 

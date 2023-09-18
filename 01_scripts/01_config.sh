@@ -8,6 +8,9 @@ PCA_ANGSD_PATH=/mnt/ibis/lbernatchez/programs/pcangsd
 #path to ngsparalog
 NGSPARALOG_PATH=~/program_valeria/ngsParalog
 
+#path to winsfs
+WINSFS_PATH=~/program_valeria/winsfs
+
 #filter : will keep SNP above this allele frequency (over all individuals)
 MIN_MAF=0.05 
 

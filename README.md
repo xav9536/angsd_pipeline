@@ -37,11 +37,18 @@ http://www.popgen.dk/software/index.php/NgsAdmix
 
 install pcangsd (maybe in the misc folder) & check if you have python2
 http://www.popgen.dk/software/index.php/PCAngsd
-copy the path into 01_config.sh PCA_ANGSD_PATH=~/Softwares/pcangsd
+copy the path into 01_config.sh `PCA_ANGSD_PATH=~/Softwares/pcangsd`
 
 install ngsparalog
 https://github.com/tplinderoth/ngsParalog
-copy the path into 01_config.sh NGSPARALOG_PATH=~/Softwares/ngsparalog
+copy the path into 01_config.sh `NGSPARALOG_PATH=~/Softwares/ngsparalog`
+
+install winsfs
+https://github.com/malthesr/winsfs
+copy the path into 01_config.sh `WINSFS_PATH=~/Softwares/winsfs`
+
+install ngsLD
+https://github.com/fgvieira/ngsLD
 
 install mosdepth
 https://github.com/brentp/mosdepth
@@ -133,7 +140,7 @@ sbatch 01_scripts/utility_scripts/mosdepth_by_bam.sh
 ```
 NB: This script uses grep to recognize patterns corresponding to your samples ID in the bam file names (e.g. `[A-Z][A-Z][A-Z]s_[0-9][0-9][0-9]-[0-9][0-9]`). Edit it to fit your data.
 
-# 03_RUN_INITIAL_ANALYSIS_ON_WHOLE_DATASET
+# 03 Run initial SNP calling on whole dataset, with filtration
 ## A) Call SNP and run ngsparalog to filter deviant SNPs
 
 This script will work on all bamfiles and use ANGSD to call SNPs that pass coverage and MAF filters, then calculate the likelihoods that reads wer mismapped at the position of snps using ngsparalog to produce list of canonical and deviant SNPs. At this step, it is not necessary to output genotype likelihoods in a beagle file.
@@ -153,41 +160,64 @@ Now that we have lists of canonical SNPs for each chromosome, we can run ANGSD a
 cat 02_info/regions_number.txt | parallel -j10 srun -c 4 --mem 20G -p ibis_small -o log_%j --time 1-00:00 ./01_scripts/03B_gl_maf_canonical.sh {}
 ```
 
+After running each chromosome in parallel, you can use the following script to combine all chromosomes in a single beagle file for the next steps.
+```
+source 01_scripts/01_config.sh
+
+./01_scripts/utility_scripts/concat_chr_beagle.sh 03B_gl_maf_canonical/  all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
+```
+
+
 ## C) Prune dataset for linkage desiquilibrium (optional)
 
 
 
-# 04_PCA_VISUALISE_CHECK_WHETHER_YOU_WANT_TO_EXCLUDE_OUTLIERS
+# 04 PCA to visualise population structure and exclude potential outliers 
 this script will work on all individuals using the beagle genotype likelihood and calculate a covariance matrix with angsd.
 it also output the pca with R, and visualisation in pdf
 
-The PCA tend to be driven by few outliers (unclear why) and by duplicates (typically 2 points at an extreme of a PC). They will also be affected by related or inbred samples that co-vary too much with each other. Check for all that, and remove the ones you want. (For duplicate we often keep the one with the more coverage) by editing the bam.filelist. Finally re-run step 03 and 04 with an edited bamlist
+The PCA tend to be driven by few outliers (unclear why) and by duplicates (typically 2 points at an extreme of a PC). They will also be affected by related or inbred samples that co-vary too much with each other. Check for all that, and remove the ones you want. (For duplicate we often keep the one with the more coverage) by editing the bam.filelist. Finally re-run step 03B and 04 with an edited bamlist.
 
 this requires pcangsd to be cloned and a version of Python v2 with alias "python2"
 
 maybe edit NB_CPU and memory (sometimes require a lot of memory >100 G)
 ```
-sbatch 01_scripts/04_pca.sh
+sbatch 01_scripts/04B_pca.sh
 ```
 for further visualisation using information from info.txt, the script 01_scripts/Rscripts/visualise_pca.r can be useful.
 The current visualisation is very basic and was tuned for my 3-groups inversion so it uses Kernel statistics to colour into three groups. Don't bother too much about it, just look at the general repartition of points and export the .pca file to your computer to tune the colours to your own needs (population, sex, etc)
 
+If you performed LD pruning at step 03, this script can easily produce a PCA for the pruned data:
+```
+sbatch 01_scripts/04C_pca_LDpruned.sh
+```
 
-# 05_ADMIXTURE_ANALYSIS
+
+# 05 ADMIXTURE analysis (NGSAdmix)
 this script will work on all individuals using the beagle genotype likelihood and perform an admixture analysis. 
 this requires NGSadmix to be installed and its path export in the bashrc. 
 NGS admiw will explore all number of population between K_MIN and K_MAX as provided in the 01_config.sh.
 
 maybe edit NB_CPU=1 & edit K_MIN and K_MAX in the 01_config.sh
 
-sbatch 01_scripts/05_ngs_admix.sh
+To run NGSAdmix on your complete (filtered) dataset:
+```
+sbatch 01_scripts/05B_ngs_admix.sh
+```
+
+However, this clustering appproach assumes independance of genetic markers. As such, consider performing LD pruning (`03C`), then running `05C` instead. With a shortened list of SNPs, this step will run much faster, especially at higher values of K.
+```
+sbatch 01_scripts/05C_ngs_admix_LDpruned.sh
+```
 
 for further visualisation using information from info.txt, the script 01_scripts/Rscripts/visualise_admix.r can be useful
 
-# 06_CALCULATE_ALLELES_FREQUENCIES_BY_POP
-this script will work on bamfiles by population and calculate saf  & maf. 
-It will run on the list of sites determined at step 3 (filter on global population). Major and minor alleles are polarized by the list of SNPs from step 3 which means 
-that an allele can be minor at the scale of all populations but at frequency >50% in a given population. Keeping this polarisation is important because we want to have the frequency of the same allele accross popualtions.
+# 06 Calculate allelic frequencies by population
+This script will work on bamfiles by population and calculate maf.
+It will run on the list of sites determined at step 3 (filter on global population). Major and minor alleles are polarized by the list of SNPs from step 03 which means that an allele can be minor at the scale of all populations but at frequency >50% in a given population.
+
+Keeping this polarisation is important because we want to have the frequency of the same allele accross popualtions. Note that you can also choose to polarize your alleles from the start using the reference genome (`-doMajorMinor 4 -ref 02_info/genome.fasta`), or an ancestral genome if you have one (`-doMajorMinor 5 -anc 02_info/ancestral_genome.fasta`). Don't forget to index your genome.
+
 In addition it will filter for sites with at least one read in a minimum proportion of individuals within each pop
 
 maybe edit cpu & choose on which list of pop run the analyses
@@ -197,9 +227,12 @@ sbatch 01_scripts/06_saf_maf_by_pop.sh
 ```
 The resulting MAF by population are the data used by the selection_analysis pipeline which does environmental associations.
 
-# 07_CALCULATE_PAIRWISE_FST
+# 07 Calculate pairwise FST
 This script will calculate the unfold saf by population; then the 2dSFS and FST for each pair of populations
+
 It starts with a R script that subset the population bamlist ot have the same number of individuals as this factor can strongly influence Fst values.
+
+FST calculation is run after filtering for deviant SNPs (`03A`), as these can lead to underestimation of population structure.
 
 maybe edit
 ```
@@ -211,8 +244,12 @@ sbatch 01_scripts/07_fst_by_group.sh
 ```
 for further visualisation (requires the corrplot package), you may use 01_scripts/Rscripts/visualise_fst.r 
 
-# 08_CALCULATE_THETAS
-this script will NOT filter on Maf as we want to keep all positions to calculate thetas statistics. It will simply filter on coverage with the same parameters fixed in 01_config.sh. It calculates the saf, 1DSFS and thetas statistics by population. I have tried on all populations together but it does not really make sense and it is impossible to run on thousands of individuals.
+# 08 Calculate thetas
+For the estimation of theta statistic, we can not filter for MAF, as we want to keep all positions, including invariant ones (without SNP, MAF = 0). For the same reason, we can not provide the list of SNPs filtered by ngsparalog. To avoid the overestimation of genetic diversity by including spurious deviant SNPs, we will mask
+
+This script will NOT filter on MAF as we want to keep all positions to calculate thetas statistics. It will simply filter on coverage with the same parameters fixed in 01_config.sh.
+
+It calculates the saf, 1DSFS and thetas statistics by population. I have tried on all populations together but it does not really make sense and it is impossible to run on thousands of individuals.
 
 Beware if ancestral sequenc is the reference (folded spectrum), not all stats are meaningful.
 ```
