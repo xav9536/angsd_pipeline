@@ -164,7 +164,7 @@ After running each chromosome in parallel, you can use the following script to c
 ```
 source 01_scripts/01_config.sh
 
-./01_scripts/utility_scripts/concat_chr_beagle.sh 03B_gl_maf_canonical/  all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
+./01_scripts/utility_scripts/concat_chr_beagle.sh 03B_gl_maf_canonical/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
 ```
 
 
@@ -182,6 +182,7 @@ this requires pcangsd to be cloned and a version of Python v2 with alias "python
 
 maybe edit NB_CPU and memory (sometimes require a lot of memory >100 G)
 ```
+conda activate pcangsd_test
 sbatch 01_scripts/04B_pca.sh
 ```
 for further visualisation using information from info.txt, the script 01_scripts/Rscripts/visualise_pca.r can be useful.
