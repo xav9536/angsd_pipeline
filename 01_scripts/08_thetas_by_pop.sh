@@ -50,8 +50,9 @@ do
 	echo "will filter for sites with at least one read in $MIN_IND individuals, which is $PERCENT_IND of the total and output saf"
 		
 	angsd -P $NB_CPU -underFlowProtect 1 \
-	-dosaf 1 -GL 2 -doMajorMinor 1 -doCounts 1 \
+	-dosaf 1 -GL 2 -doMajorMinor 5 -doCounts 1 \
 	-anc 02_info/genome.fasta \
+	-rf 02_info/regions.txt \
 	-remove_bads 1 -minMapQ 30 -minQ 20 -minInd $MIN_IND -setMaxDepth $MAX_DEPTH -setMinDepthInd $MIN_DEPTH \
 	-b $BAM_LIST -out 08_thetas/"$i"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
 	
