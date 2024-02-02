@@ -59,8 +59,6 @@ angsd -P $NB_CPU \
 -b 07_fst_by_pop_pair/$GROUP/"$i"subsetbam.filelist -out 07_fst_by_pop_pair/$GROUP/"$i"_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
 done
 
-
-
 # 3 calculate FST
 #prepare variables - avoid to modify
 num_pops=$(wc -l "$POP_FILE1" | cut -d " " -f 1)

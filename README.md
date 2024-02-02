@@ -160,16 +160,40 @@ Now that we have lists of canonical SNPs for each chromosome, we can run ANGSD a
 cat 02_info/regions_number.txt | parallel -j10 srun -c 4 --mem 20G -p ibis_small -o log_%j --time 1-00:00 ./01_scripts/03B_gl_maf_canonical.sh {}
 ```
 
-After running each chromosome in parallel, you can use the following script to combine all chromosomes in a single beagle file for the next steps.
+After running each chromosome in parallel, use the following script to combine all chromosomes in a single beagle file for the next steps.
 ```
 source 01_scripts/01_config.sh
-
-./01_scripts/utility_scripts/concat_chr_beagle.sh 03B_gl_maf_canonical/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
+./01_scripts/utility_scripts/concat_chr_beagle.sh 03B_gl_maf_canonical/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR" beagle
 ```
 
 
 ## C) Prune dataset for linkage desiquilibrium (optional)
 
+LD pruning is performed in three steps :  
+
+1) Computing the correlation between nearby SNPs (here < 500kb, but can be modified in the script).
+```
+cat 02_info/regions_number.txt | parallel -j 10 srun -p ibis_medium -c 5 --mem=20G --time=7-00:00 -o log_%j 01_scripts/03C1_ngsLD.sh {}
+```
+
+2) Plotting the LD decay across distance
+```
+sbatch 01_scripts/03C2_LDdecay.sh
+```
+Inspect the resulting file to set distance and weight threshold for step 3.
+
+
+3) Pruning the linked SNPs through a graph method.
+```
+cat ./02_info/regions_number.txt | parallel -j20 srun -p ibis_medium -c 1 --mem=20G --time=7-00:00 -o log_%j 01_scripts/03C3_LDpruning.sh {} 200000 0.1
+```
+Here we pruned until no pairs of SNP inside 200kb were correlated over 0.1. This should drastically reduce the number of SNPs to satistify the assumption of indendance of SNP for population structure assessment (04 and 05), as well as speed up the process. This script will produce a list of remaining SNPs (.pruned) and will create a pruned beagle by chr file by extracting for the output of 03B.
+
+After running each chromosome in parallel, use the following script to combine all chromosomes in a single beagle file for the next steps.
+```
+source 01_scripts/01_config.sh
+./01_scripts/utility_scripts/concat_chr_beagle.sh 03B_gl_maf_canonical/all_maf"$MIN_MAF"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR" beagle.pruned
+```
 
 
 # 04 PCA to visualise population structure and exclude potential outliers 
@@ -190,9 +214,9 @@ The current visualisation is very basic and was tuned for my 3-groups inversion 
 
 If you performed LD pruning at step 03, this script can easily produce a PCA for the pruned data:
 ```
+conda activate pcangsd_test
 sbatch 01_scripts/04C_pca_LDpruned.sh
 ```
-
 
 # 05 ADMIXTURE analysis (NGSAdmix)
 this script will work on all individuals using the beagle genotype likelihood and perform an admixture analysis. 
@@ -215,16 +239,16 @@ for further visualisation using information from info.txt, the script 01_scripts
 
 # 06 Calculate allelic frequencies by population
 This script will work on bamfiles by population and calculate maf.
-It will run on the list of sites determined at step 3 (filter on global population). Major and minor alleles are polarized by the list of SNPs from step 03 which means that an allele can be minor at the scale of all populations but at frequency >50% in a given population.
+It will run on the list of canonical sites determined at step 3A (filter on global population). Major and minor alleles are polarized by the list of SNPs from step 03A which means that an allele can be minor at the scale of all populations but at frequency >50% in a given population.
 
-Keeping this polarisation is important because we want to have the frequency of the same allele accross popualtions. Note that you can also choose to polarize your alleles from the start using the reference genome (`-doMajorMinor 4 -ref 02_info/genome.fasta`), or an ancestral genome if you have one (`-doMajorMinor 5 -anc 02_info/ancestral_genome.fasta`). Don't forget to index your genome.
+Keeping this polarisation is important because we want to have the frequency of the same allele accross populations. Note that you can also choose to polarize your alleles from the start using the reference genome (`-doMajorMinor 4 -ref 02_info/genome.fasta`), or an ancestral genome if you have one (`-doMajorMinor 5 -anc 02_info/ancestral_genome.fasta`). Don't forget to index your genome.
 
 In addition it will filter for sites with at least one read in a minimum proportion of individuals within each pop
 
 maybe edit cpu & choose on which list of pop run the analyses
 NB_CPU=1 & POP_FILE1=02_info/pop.txt 
 ```
-sbatch 01_scripts/06_saf_maf_by_pop.sh
+sbatch 01_scripts/06_maf_by_pop.sh
 ```
 The resulting MAF by population are the data used by the selection_analysis pipeline which does environmental associations.
 
@@ -246,11 +270,16 @@ sbatch 01_scripts/07_fst_by_group.sh
 for further visualisation (requires the corrplot package), you may use 01_scripts/Rscripts/visualise_fst.r 
 
 # 08 Calculate thetas
-For the estimation of theta statistic, we can not filter for MAF, as we want to keep all positions, including invariant ones (without SNP, MAF = 0). For the same reason, we can not provide the list of SNPs filtered by ngsparalog. To avoid the overestimation of genetic diversity by including spurious deviant SNPs, we will mask
+For the estimation of theta statistic, we can not filter for MAF, as we want to keep all positions, including invariant ones (without SNP, MAF = 0). For the same reason, we can not provide the list of SNPs filtered by ngsparalog. To avoid the overestimation of genetic diversity by including spurious deviant SNPs, we will first create a copy of our reference (or ancestral) genome in which the regions around deviant SNP is masked.
 
-This script will NOT filter on MAF as we want to keep all positions to calculate thetas statistics. It will simply filter on coverage with the same parameters fixed in 01_config.sh.
+![Deviant masking](https://github.com/xav9536/angsd_pipeline/Fig_deviant_masking.png)
+
+
 
 It calculates the saf, 1DSFS and thetas statistics by population. I have tried on all populations together but it does not really make sense and it is impossible to run on thousands of individuals.
+
+You will need the `data.table`and `GenomicRanges` R packages (through [Biocmanager](https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html)).
+
 
 Beware if ancestral sequenc is the reference (folded spectrum), not all stats are meaningful.
 ```
