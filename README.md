@@ -270,7 +270,9 @@ sbatch 01_scripts/07_fst_by_group.sh
 for further visualisation (requires the corrplot package), you may use 01_scripts/Rscripts/visualise_fst.r 
 
 # 08 Calculate thetas
-For the estimation of theta statistic, we can not filter for MAF, as we want to keep all positions, including invariant ones (without SNP, MAF = 0). For the same reason, we can not provide the list of SNPs filtered by ngsparalog. To avoid the overestimation of genetic diversity by including spurious deviant SNPs, we will first create a copy of our reference (or ancestral) genome in which the regions around deviant SNP is masked. You will need the `data.table`and `GenomicRanges` R packages (through [Biocmanager](https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html)).
+For the estimation of theta statistic, we can not filter for MAF, as we want to keep all positions, including invariant ones (without SNP, MAF = 0). For the same reason, we can not provide the list of SNPs filtered by ngsparalog.
+
+To avoid the overestimation of genetic diversity by including spurious deviant SNPs, we will first create a copy of our reference (or ancestral) genome in which the regions around deviant SNP is masked. You will need the `data.table`and `GenomicRanges` R packages (through [Biocmanager](https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html)). Note that isolated deviant SNPs are not masked, to avoid overmasking false positives.
 
 ![Deviant masking](Fig_deviant_masking.png)
 
