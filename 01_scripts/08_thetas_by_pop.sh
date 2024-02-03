@@ -51,7 +51,7 @@ do
 		
 	angsd -P $NB_CPU -underFlowProtect 1 \
 	-dosaf 1 -GL 2 -doMajorMinor 5 -doCounts 1 \
-	-anc 02_info/genome.fasta \
+	-anc 02_info/genome_maskdev.fasta \
 	-rf 02_info/regions.txt \
 	-remove_bads 1 -minMapQ 30 -minQ 20 -minInd $MIN_IND -setMaxDepth $MAX_DEPTH -setMinDepthInd $MIN_DEPTH \
 	-b $BAM_LIST -out 08_thetas/"$i"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"
@@ -71,7 +71,7 @@ do
 	#now we use the sfs and the function dotheta to get the theta output
 	echo "estimate thetas for pop $i"
 	angsd -P $NB_CPU -dosaf 1 -doThetas 1 -GL 2 -doMajorMinor 1 -underFlowProtect 1 \
-	-anc 02_info/genome.fasta -remove_bads 1 -minMapQ 30 -minQ 20 -minInd $MIN_IND -setMinDepthInd $MIN_DEPTH \
+	-anc 02_info/genome_maskdev.fasta -remove_bads 1 -minMapQ 30 -minQ 20 -minInd $MIN_IND -setMinDepthInd $MIN_DEPTH \
 	-b 07_fst_by_pop_pair/$GROUP/"$i"subsetbam.filelist \
 	-pest 08_thetas/"$i"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"."$NSITES".dsfs \
 	-out 08_thetas/"$i"_pctind"$PERCENT_IND"_maxdepth"$MAX_DEPTH_FACTOR"

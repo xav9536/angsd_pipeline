@@ -8,7 +8,7 @@ https://doi.org/10.1093/molbev/msab143
 
 This version of the pipeline has been modified by Xavier Dallaire following exploration around mismapped reads creating SNPs in deviation from expectation of Hardy-Weinberg equilibrium and balanced allelic ratio (see preprint below).
 
-Xavier Dallaire, Raphael Bouchard, Philippe Hénault, Gabriela Ulmo Diaz, Eric Normandeau, Claire Mérot, Louis Bernatchez, J.-S. Moore. (2023).  Widespread deviant patterns of heterozygosity due to autopolyploidization, repeated elements and duplication in whole-genome sequencing of salmonids. Preprint: [https://www.biorxiv.org/content/10.1101/2023.07.27.550877v1](https://doi.org/10.1101/2023.07.27.550877)
+Xavier Dallaire, Raphael Bouchard, Philippe Hénault, Gabriela Ulmo Diaz, Eric Normandeau, Claire Mérot, Louis Bernatchez, J.-S. Moore. (2023).  Widespread deviant patterns of heterozygosity due to autopolyploidization, repeated elements and duplication in whole-genome sequencing of salmonids. Genome Biology & Evolution: [https://doi.org/10.1093/gbe/evad229](https://academic.oup.com/gbe/article/15/12/evad229/7470724)
 
 Here is a summary of the additions to the original pipeline:
 
@@ -270,19 +270,15 @@ sbatch 01_scripts/07_fst_by_group.sh
 for further visualisation (requires the corrplot package), you may use 01_scripts/Rscripts/visualise_fst.r 
 
 # 08 Calculate thetas
-For the estimation of theta statistic, we can not filter for MAF, as we want to keep all positions, including invariant ones (without SNP, MAF = 0). For the same reason, we can not provide the list of SNPs filtered by ngsparalog. To avoid the overestimation of genetic diversity by including spurious deviant SNPs, we will first create a copy of our reference (or ancestral) genome in which the regions around deviant SNP is masked.
+For the estimation of theta statistic, we can not filter for MAF, as we want to keep all positions, including invariant ones (without SNP, MAF = 0). For the same reason, we can not provide the list of SNPs filtered by ngsparalog. To avoid the overestimation of genetic diversity by including spurious deviant SNPs, we will first create a copy of our reference (or ancestral) genome in which the regions around deviant SNP is masked. You will need the `data.table`and `GenomicRanges` R packages (through [Biocmanager](https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html)).
 
-![Deviant masking](https://github.com/xav9536/angsd_pipeline/Fig_deviant_masking.png)
+![Deviant masking](Fig_deviant_masking.png)
 
+The 08 script then calculates the saf, 1DSFS and thetas statistics by population.
 
-
-It calculates the saf, 1DSFS and thetas statistics by population. I have tried on all populations together but it does not really make sense and it is impossible to run on thousands of individuals.
-
-You will need the `data.table`and `GenomicRanges` R packages (through [Biocmanager](https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html)).
-
-
-Beware if ancestral sequenc is the reference (folded spectrum), not all stats are meaningful.
+Beware if ancestral sequence is the reference (folded spectrum), not all stats are meaningful.
 ```
+sbatch 01_scripts/mask_deviants.sh
 sbatch 01_scripts/08_thetas_by_pop.sh
 ```
 # 09_MAKE_GWAS
