@@ -25,6 +25,6 @@ done
 for FILE in $(ls -1 02_info/depth_chr01/*.mosdepth.summary.txt)
 do
 NAME=`echo "$FILE" | cut -d'.' -f1`
-DEPTH=`head -n2 $FILE` | tail -n1 | cut -f4`
+DEPTH=`head -n2 "$FILE" | tail -n1 | cut -f4`
 echo -e $NAME"\t"$DEPTH >> 02_info/depth_chr01/summary_depth_chr01.txt
 done
